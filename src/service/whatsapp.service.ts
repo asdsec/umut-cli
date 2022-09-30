@@ -1,49 +1,72 @@
 import dotenv from 'dotenv';
-import { Client, GroupChat, GroupParticipant } from 'whatsapp-web.js';
+import { Client, GroupChat } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
-import { getParticipants } from './participants.service';
 import { Participant } from '../model/participant.model';
 import { checkIsValid, fixPhoneNumber } from '../utility/fixPhoneNumber';
 import chalk from 'chalk';
 
 dotenv.config();
 
-const client = new Client({});
+type OnReadyCallBack<R> = (() => Promise<R>) | (() => R);
 
-export function startWhatsapp() {
+class CustomClient extends Client {
+	async getGroupChat(groupName: string): Promise<GroupChat | undefined> {
+		const chats = await this.getChats();
+		const chat = chats.find((chat) => chat.name === groupName);
+		if (chat?.isGroup) return chat as GroupChat;
+	}
+
+	async run<R>(onReady: OnReadyCallBack<R>): Promise<R> {
+		const ready = 'ready';
+		var result: any;
+		this.on(ready, async () => {
+			result = await onReady();
+		});
+		return result as R;
+	}
+}
+
+export const client = new CustomClient({});
+
+function getGroupPhones(group: GroupChat) {
+	return group.participants.map((user) => user.id.user);
+}
+
+export function login(): void {
 	const qr = 'qr';
-	const ready = 'ready';
 
 	client.on(qr, (qr) => {
 		qrcode.generate(qr, { small: true });
 	});
-
-	client.on(ready, async () => {
-		const participants = await getParticipants();
-		addParticipantsIfNotInGroup(participants);
-	});
-
-	client.initialize();
 }
 
-async function addParticipantsIfNotInGroup(participants: Participant[]) {
-	const chats = await client.getChats();
+export async function addToGroup(
+	participantIds: string[],
+	groupName: string
+): Promise<number | undefined> {
+	const group = await client.getGroupChat(groupName);
+
+	if (group) {
+		const ids = participantIds.map((phone) => {
+			return fixPhoneNumber(phone).serialized();
+		});
+		const result = await group.addParticipants(ids);
+		console.info(result);
+		return result.status;
+	}
+}
+
+export async function addToGroupFromWebSite(participants: Participant[]) {
 	let added = Array<Participant>();
 	let unAdded = Array<Participant>();
 
-	const chat = chats.find(
-		(chat) => chat.name === process.env.WHATSAPP_GROUP_NAME
-	);
+	const group = await client.getGroupChat(process.env.WHATSAPP_GROUP_NAME);
 
 	participants.forEach((participant) => {
-		if (chat?.isGroup) {
-			const group = chat as GroupChat;
-
-			const users = group.participants;
-			const userPhones = getGroupsPhones(users);
-
+		if (group) {
+			const groupPhones = getGroupPhones(group);
 			const phone = fixPhoneNumber(participant.phone ?? '');
-			const isInGroup = userPhones.includes(phone);
+			const isInGroup = groupPhones.includes(phone);
 			if (!isInGroup) {
 				if (checkIsValid(phone)) {
 					group.addParticipants([phone.serialized()]);
@@ -60,7 +83,7 @@ async function addParticipantsIfNotInGroup(participants: Participant[]) {
 
 function printNewParticipants(added: Participant[], unAdded: Participant[]) {
 	const successfulAdd = 'Gruba Eklenen Üyeler:';
-	const unsuccessfulAdd = 'Gruba Eklenemeyen Üyeler::';
+	const unsuccessfulAdd = 'Gruba Eklenemeyen Üyeler:';
 
 	if (added.length !== 0) {
 		console.log(chalk.blue(successfulAdd), chalk.green(added));
@@ -68,12 +91,4 @@ function printNewParticipants(added: Participant[], unAdded: Participant[]) {
 	if (unAdded.length !== 0) {
 		console.log(chalk.blue(unsuccessfulAdd), chalk.red(unAdded));
 	}
-}
-
-function getGroupsPhones(participants: GroupParticipant[]) {
-	return participants.map((user) => {
-		const id = user['id'];
-		const phone = id['user'];
-		return phone;
-	});
 }
