@@ -1,7 +1,7 @@
-interface Command {
+interface C {
 	name: string;
 	description: string;
-	flags: Set<Flag>;
+	flags?: Set<Flag>;
 }
 
 interface Flag {

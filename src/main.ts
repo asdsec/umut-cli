@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
 import yargs from 'yargs';
-import take from './commands/take';
+const commands = 'commands';
 
-take.handle(yargs);
-
-const argv = yargs.argv;
+yargs.commandDir(commands).demandCommand().help().strict().argv;
