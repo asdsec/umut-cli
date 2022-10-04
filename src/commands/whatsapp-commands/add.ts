@@ -1,6 +1,7 @@
 import { ArgumentsCamelCase, InferredOptionTypes } from 'yargs';
 import * as whatsapp from '../../service/whatsapp.service';
 import * as participantService from '../../service/participants.service';
+import { Participant } from '../../model/participant.model';
 
 const cmd = {
 	command: 'add',
@@ -15,7 +16,7 @@ const cmd = {
 		group: {
 			alias: 'g',
 			description: 'The group which the phones will be added.',
-			default: 'Robot Topluluğu',
+			default: 'TEST',
 			string: true,
 		},
 		phones: {
@@ -34,6 +35,7 @@ async function handlerFunction(argv: AddCommandArgvType) {
 	if (argv.auto) {
 		await whatsapp.client.run<Promise<void>>(async () => {
 			const participants = await participantService.getParticipants();
+			// const participants = [new Participant(['', '', '', '05452722055', ''])];
 			whatsapp.addToGroupFromWebSite(participants);
 		});
 	} else {

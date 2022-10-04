@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import { Argv, ArgumentsCamelCase, InferredOptionTypes } from 'yargs';
 import { Command } from '../interface/command';
-import { startWhatsapp } from '../service/whatsapp.service';
 import { saveAmount } from '../utility/file.utils';
 
 const command = {
@@ -42,9 +41,9 @@ function run(
 	>
 ): void {
 	if (argv.send) {
-		startWhatsapp();
+		// startWhatsapp();
 	} else {
-		startWhatsapp();
+		// startWhatsapp();
 		console.log(chalk.blue(email.title));
 		console.log(chalk.yellow(email.text));
 	}

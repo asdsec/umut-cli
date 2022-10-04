@@ -4,6 +4,7 @@ import qrcode from 'qrcode-terminal';
 import { Participant } from '../model/participant.model';
 import { checkIsValid, fixPhoneNumber } from '../utility/fixPhoneNumber';
 import chalk from 'chalk';
+import '../extensions/string.extensions';
 
 dotenv.config();
 
@@ -86,9 +87,15 @@ function printNewParticipants(added: Participant[], unAdded: Participant[]) {
 	const unsuccessfulAdd = 'Gruba Eklenemeyen Üyeler:';
 
 	if (added.length !== 0) {
-		console.log(chalk.blue(successfulAdd), chalk.green(added));
+		console.log(
+			chalk.blue(successfulAdd),
+			chalk.green(added.map((p) => JSON.stringify(p)))
+		);
 	}
 	if (unAdded.length !== 0) {
-		console.log(chalk.blue(unsuccessfulAdd), chalk.red(unAdded));
+		console.log(
+			chalk.blue(unsuccessfulAdd),
+			chalk.red(unAdded.map((p) => JSON.stringify(p)))
+		);
 	}
 }
