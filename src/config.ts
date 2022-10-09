@@ -29,8 +29,8 @@ function throwIfNot<T, K extends keyof T>(
 }
 
 const list = [
-	'USERNAME',
-	'PASSWORD',
+	'STUDENT_NO',
+	'STUDENT_PASSWORD',
 	'AUTH_URL',
 	'TARGET_URL',
 	'WHATSAPP_GROUP_NAME',
@@ -43,8 +43,8 @@ const list = [
 list.map((v) => throwIfNot(process.env, v));
 
 export interface IProcessEnv {
-	USERNAME: string;
-	PASSWORD: string;
+	STUDENT_NO: string;
+	STUDENT_PASSWORD: string;
 	AUTH_URL: string;
 	TARGET_URL: string;
 	WHATSAPP_GROUP_NAME: string;

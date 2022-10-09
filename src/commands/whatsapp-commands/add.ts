@@ -16,7 +16,7 @@ const cmd = {
 		group: {
 			alias: 'g',
 			description: 'The group which the phones will be added.',
-			default: 'TEST',
+			default: 'Robot Topluluğu 22-23',
 			string: true,
 		},
 		phones: {
@@ -35,8 +35,10 @@ async function handlerFunction(argv: AddCommandArgvType) {
 	if (argv.auto) {
 		await whatsapp.client.run<Promise<void>>(async () => {
 			const participants = await participantService.getParticipants();
+			// console.log(participants);
 			// const participants = [new Participant(['', '', '', '05452722055', ''])];
-			whatsapp.addToGroupFromWebSite(participants);
+			await whatsapp.addToGroupFromWebSite(participants);
+			process.exit(0);
 		});
 	} else {
 		result = await whatsapp.client.run<Promise<number | undefined>>(

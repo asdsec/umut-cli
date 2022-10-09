@@ -21,7 +21,10 @@ class CustomClient extends Client {
 		const ready = 'ready';
 		var result: any;
 		this.on(ready, async () => {
+			console.info('[INFO] : Whatsapp : Whatsapp is ready.');
+			console.info('[INFO] : Whatsapp : Main operation has been started.');
 			result = await onReady();
+			console.info('[INFO] : Whatsapp : Main operation has been completed.');
 		});
 		return result as R;
 	}
@@ -37,6 +40,7 @@ export function login(): void {
 	const qr = 'qr';
 
 	client.on(qr, (qr) => {
+		console.info('[INFO] : Whatsapp : Qr code is ready.');
 		qrcode.generate(qr, { small: true });
 	});
 }
@@ -47,11 +51,14 @@ export async function addToGroup(
 ): Promise<number | undefined> {
 	const group = await client.getGroupChat(groupName);
 
+	console.info('[INFO] : Whatsapp : Users are being added to the group...');
+
 	if (group) {
 		const ids = participantIds.map((phone) => {
 			return fixPhoneNumber(phone).serialized();
 		});
 		const result = await group.addParticipants(ids);
+		console.info('[INFO] : Whatsapp : Users have been added to the group.');
 		console.info(result);
 		return result.status;
 	}
@@ -60,42 +67,77 @@ export async function addToGroup(
 export async function addToGroupFromWebSite(participants: Participant[]) {
 	let added = Array<Participant>();
 	let unAdded = Array<Participant>();
+	let usersWithInvalidPhone = Array<Object>();
+
+	console.info('[INFO] : Whatsapp : Users are being added to the group...');
 
 	const group = await client.getGroupChat(process.env.WHATSAPP_GROUP_NAME);
 
-	participants.forEach((participant) => {
+	if (group != undefined) console.log(getGroupPhones(group));
+	console.log('---------------------');
+
+	participants.forEach(async (participant) => {
 		if (group) {
+			const doNotAdd = ['905335692929', '905395052251', '905357846459'];
+
 			const groupPhones = getGroupPhones(group);
 			const phone = fixPhoneNumber(participant.phone ?? '');
 			const isInGroup = groupPhones.includes(phone);
-			if (!isInGroup) {
-				if (checkIsValid(phone)) {
-					group.addParticipants([phone.serialized()]);
-					added.push(participant);
-				} else {
-					unAdded.push(participant);
-				}
+			const isDoNotAdd = doNotAdd.includes(phone);
+
+			const userForLogging = {
+				name: participant.name,
+				phone: participant.phone,
+				fixedPhone: phone,
+				isInGroup: isInGroup,
+			};
+
+			if (!isInGroup && !isDoNotAdd) {
+				usersWithInvalidPhone.push(userForLogging);
+				const obj = await group.addParticipants([phone.serialized()]);
+				console.log(obj);
+				console.log(
+					'ATATATATATATATATATAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+				);
+				added.push(participant);
+				unAdded.push(participant);
 			}
 		}
 	});
 
-	printNewParticipants(added, unAdded);
+	console.info('[INFO] : Whatsapp : Users have been added to the group.');
+
+	printNewParticipants(added, unAdded, usersWithInvalidPhone);
 }
 
-function printNewParticipants(added: Participant[], unAdded: Participant[]) {
-	const successfulAdd = 'Gruba Eklenen Üyeler:';
-	const unsuccessfulAdd = 'Gruba Eklenemeyen Üyeler:';
+function printNewParticipants(
+	added: Participant[],
+	unAdded: Participant[],
+	usersWithInvalidPhone: Object[]
+) {
+	const successfulAdd = 'Gruba Eklenen Üyeler';
+	const successfulAddEnd = '--------------------';
+	const unsuccessfulAdd = 'Gruba Eklenemeyen Üyeler';
+	const unsuccessfulAddEnd = '------------------------';
+	const usersWithInvalidPhoneText = 'Grupta olmayan kullanıcılar';
+	const usersWithInvalidPhoneEndText = '---------------------------';
+	const tre = '--------------------------------';
 
-	if (added.length !== 0) {
-		console.log(
-			chalk.blue(successfulAdd),
-			chalk.green(added.map((p) => JSON.stringify(p)))
-		);
-	}
-	if (unAdded.length !== 0) {
-		console.log(
-			chalk.blue(unsuccessfulAdd),
-			chalk.red(unAdded.map((p) => JSON.stringify(p)))
-		);
-	}
+	console.log('\n');
+
+	console.log(chalk.green(tre, successfulAdd, tre));
+	console.info(added);
+	console.log(chalk.green(tre, successfulAddEnd, tre));
+
+	console.log('\n');
+
+	console.log(chalk.red(tre, unsuccessfulAdd, tre));
+	console.info(unAdded);
+	console.log(chalk.red(tre, unsuccessfulAddEnd, tre));
+
+	console.log('\n');
+
+	console.log(chalk.yellow(tre, usersWithInvalidPhoneText, tre));
+	console.info(usersWithInvalidPhone);
+	console.log(chalk.yellow(tre, usersWithInvalidPhoneEndText, tre));
 }

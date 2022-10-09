@@ -20,4 +20,8 @@ describe('fixPhoneNumber module', () => {
 	test('should remove + at beginning', () => {
 		expect(fixPhoneNumber('+905445556677')).toBe('905445556677');
 	});
+
+	test('should handle', () => {
+		expect(fixPhoneNumber('0535 253 56 52')).toBe('905352535652');
+	});
 });

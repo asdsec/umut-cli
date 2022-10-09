@@ -2,9 +2,9 @@ const kZero = '0';
 const kFive = '5';
 const kNine = '9';
 const kEmpty = '';
-const plusRegEx = /\+/;
-const antiNumberRegEx = /[^0-9]/;
-const blankRegEx = /\s+/;
+const plusRegEx = /\+/g;
+const antiNumberRegEx = /[^0-9]/g;
+const blankRegEx = /\s+/g;
 
 export function fixPhoneNumber(phone: string): string {
 	phone = phone.trim().replace(plusRegEx, kEmpty).replace(blankRegEx, kEmpty);
